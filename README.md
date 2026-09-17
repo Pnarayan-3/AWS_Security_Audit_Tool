@@ -807,11 +807,11 @@ Responsible for:
 * Generating reports
 * Running the security gate
 
-### `scanner/`
+### `scanners/`
 
 Contains the scanning logic.
 
-### `scanner/rules/`
+### `scanners/rules/`
 
 Contains individual security rules.
 
@@ -825,7 +825,7 @@ root_account.py
 access_keys.py
 ```
 
-### `scanner/scanners/`
+### `scanners/scanner/`
 
 Contains higher-level scanner wrappers.
 
@@ -952,31 +952,6 @@ Before using the project in a real AWS environment:
 
 ---
 
-# Limitations
-
-This tool is a learning and portfolio project and is not intended to replace a full AWS security platform.
-
-Current checks cover a limited set of AWS security configurations.
-
-It does not currently provide comprehensive coverage of:
-
-* All IAM policies
-* All S3 configurations
-* CloudTrail configuration
-* AWS Config
-* KMS key policies
-* VPC flow logs
-* GuardDuty
-* Security Hub
-* EKS security
-* Lambda security
-* RDS security
-* Complete CIS AWS Benchmark coverage
-
-Additional security rules can be added to the `scanner/rules/` directory.
-
----
-
 # Future Improvements
 
 Potential improvements include:
@@ -999,31 +974,11 @@ Potential improvements include:
 
 ---
 
-# License
-
-This project is licensed under the MIT License.
-
-See:
-
-```text
-LICENSE
-```
-
-for the complete license text.
-
----
-
 # Author
 
 **Pushkar Narayan**
 
 Software Developer | Cloud & DevOps | Software Testing & Automation
-
-GitHub:
-
-```text
-https://github.com/Pnarayan-3
-```
 
 ---
 
