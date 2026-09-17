@@ -1,0 +1,78 @@
+# =========================
+# Python
+# =========================
+
+.venv/
+venv/
+env/
+
+__pycache__/
+*.py[cod]
+*.pyo
+
+.pytest_cache/
+.coverage
+htmlcov/
+
+# =========================
+# Environment / Secrets
+# =========================
+
+.env
+.env.*
+!.env.example
+
+*.pem
+*.key
+
+# =========================
+# Terraform
+# =========================
+
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+
+# Terraform lock file
+# Uncomment if you don't want to commit it
+# .terraform.lock.hcl
+
+# =========================
+# AWS
+# =========================
+
+.aws/
+
+# =========================
+# Generated Reports
+# =========================
+
+reports/*.json
+reports/*.html
+reports/*.sarif
+
+# Keep reports directory in Git
+!reports/.gitkeep
+
+# =========================
+# IDE / Editor
+# =========================
+
+.vscode/
+.idea/
+
+# =========================
+# OS Files
+# =========================
+
+.DS_Store
+Thumbs.db
+
+# =========================
+# Logs
+# =========================
+
+*.log
+logs/

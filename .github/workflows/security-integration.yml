@@ -1,0 +1,166 @@
+name: AWS Security Integration
+
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+  security-events: write
+
+jobs:
+
+  security-audit:
+    name: AWS Security Audit
+    runs-on: ubuntu-latest
+
+    steps:
+
+      # ==========================================
+      # 1. Checkout Repository
+      # ==========================================
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+
+      # ==========================================
+      # 2. Configure AWS Credentials
+      # ==========================================
+      #
+      # GitHub OIDC is used here.
+      #
+      # AWS_ROLE_ARN must be configured as a
+      # GitHub repository variable.
+      #
+      - name: Configure AWS credentials
+        if: ${{ vars.AWS_ROLE_ARN != '' }}
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: eu-north-1
+
+
+      # ==========================================
+      # 3. Setup Python
+      # ==========================================
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+
+      # ==========================================
+      # 4. Install Python Dependencies
+      # ==========================================
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+
+      # ==========================================
+      # 5. Setup Terraform
+      # ==========================================
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+
+      # ==========================================
+      # 6. Terraform Init
+      # ==========================================
+      - name: Terraform Init
+        run: |
+          terraform -chdir=terraform init
+
+
+      # ==========================================
+      # 7. Create Security Test Lab
+      # ==========================================
+      #
+      # Terraform creates intentionally insecure
+      # AWS resources for our scanner to detect.
+      #
+      - name: Terraform Apply
+        run: |
+          terraform -chdir=terraform apply -auto-approve
+
+
+      # ==========================================
+      # 8. Run Security Scanner
+      # ==========================================
+      #
+      # continue-on-error is important here.
+      #
+      # A security finding can cause the security
+      # gate to fail, but we still want the workflow
+      # to continue so SARIF/reports can be uploaded
+      # and Terraform can destroy the test lab.
+      #
+      - name: Run security scanner
+        id: scan
+        continue-on-error: true
+        run: |
+          python audit.py scan --security-gate
+
+
+      # ==========================================
+      # 9. Upload SARIF
+      # ==========================================
+      #
+      # This allows GitHub Code Scanning to display
+      # security findings.
+      #
+      - name: Upload SARIF results
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: reports/security-results.sarif
+
+
+      # ==========================================
+      # 10. Upload Reports
+      # ==========================================
+      #
+      # JSON
+      # HTML
+      # SARIF
+      #
+      # are uploaded as GitHub Actions artifacts.
+      #
+      - name: Upload security reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-audit-reports
+          path: reports/
+
+
+      # ==========================================
+      # 11. Destroy Security Test Lab
+      # ==========================================
+      #
+      # Always destroy the intentionally insecure
+      # AWS resources, even if the scan fails.
+      #
+      - name: Terraform Destroy
+        if: always()
+        run: |
+          terraform -chdir=terraform destroy -auto-approve
+
+
+      # ==========================================
+      # 12. Enforce Security Gate
+      # ==========================================
+      #
+      # If the scanner failed because HIGH/CRITICAL
+      # findings were detected, the workflow fails.
+      #
+      - name: Enforce security gate
+        if: always()
+        run: |
+          if [ "${{ steps.scan.outcome }}" = "failure" ]; then
+            echo "Security gate failed."
+            exit 1
+          fi
+
+          echo "Security gate passed."
